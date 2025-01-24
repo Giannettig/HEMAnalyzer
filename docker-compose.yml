@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  db:
+    build: .
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: hema_ratings
+      POSTGRES_USER: hema_user
+      POSTGRES_PASSWORD: hema_password
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./hema_ratings:/data
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: 
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://hema_user:hema_password@db:5432/hema_ratings
+    volumes:
+      - ./app:/app
+
+volumes:
+  postgres_data: 

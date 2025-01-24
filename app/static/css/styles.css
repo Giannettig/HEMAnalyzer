@@ -1,0 +1,108 @@
+/* General Styles */
+body {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #0a0a0a, #1a1a2e);
+  color: #fff;
+  margin: 0;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Fighter Search */
+.fighter-input {
+  margin-bottom: 20px;
+}
+
+.fighter-input input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #00bcd4;
+  border-radius: 5px;
+  background: #1a1a2e;
+  color: #fff;
+}
+
+/* Profile Card */
+.profile-card {
+  background: #1a1a2e;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.profile-card h1 {
+  color: #00bcd4;
+  margin-bottom: 10px;
+}
+
+/* Stats Table */
+.stats-table {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.stats-table td {
+  background: #1a1a2e;
+  padding: 15px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+/* Recent Matches */
+.recent-matches {
+  background: #1a1a2e;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.recent-matches table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.recent-matches th,
+.recent-matches td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #333;
+}
+
+.win { color: #4caf50; }
+.loss { color: #f44336; }
+
+/* Tournament Attendance */
+.tournament-attendance {
+  background: #1a1a2e;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.tournament-list {
+  display: grid;
+  gap: 10px;
+}
+
+.tournament-item {
+  background: #16213e;
+  padding: 10px;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .stats-table {
+    grid-template-columns: 1fr;
+  }
+}

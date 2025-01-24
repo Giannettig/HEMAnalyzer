@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HEMA Fighter Profile</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* General Styles */
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0a0a0a, #1a1a2e);
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Fighter Input */
+    .fighter-input {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .fighter-input input {
+      width: 100%;
+      max-width: 300px;
+      padding: 12px;
+      border-radius: 25px;
+      border: 2px solid #00bcd4;
+      background: #1a1a2e;
+      color: #fff;
+      font-size: 16px;
+      box-shadow: 0 4px 10px rgba(0, 188, 212, 0.3);
+      outline: none;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .fighter-input input:focus {
+      border-color: #00e5ff;
+      box-shadow: 0 4px 15px rgba(0, 229, 255, 0.5);
+    }
+
+    /* Profile Card */
+    .profile-card {
+      text-align: center;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      margin-bottom: 30px;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    .profile-pic {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: #00bcd4;
+      margin: 0 auto 20px;
+      border: 4px solid #00e5ff;
+    }
+
+    .profile-card h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+      color: #00e5ff;
+    }
+
+    .rank-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #00bcd4, #00e5ff);
+      padding: 8px 16px;
+      border-radius: 25px;
+      font-size: 16px;
+      margin-top: 15px;
+      box-shadow: 0 4px 10px rgba(0, 188, 212, 0.3);
+    }
+
+    /* Stats Cards */
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    /* Countries Visited */
+    .countries-visited {
+      background: #1a1a2e;
+      padding: 25px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .countries-visited h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #00e5ff;
+    }
+
+    .flags {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .flags img {
+      width: 60px;
+      height: 40px;
+      border-radius: 5px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Weapons Usage */
+    .weapons-usage {
+      background: #1a1a2e;
+      padding: 25px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .weapons-usage h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #00e5ff;
+    }
+
+    .weapon-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .weapon-bar {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 45px;
+      background: #16213e;
+      border-radius: 22px;
+      overflow: hidden;
+      position: relative;
+      margin-right: 30px;
+    }
+
+    .weapon-progress {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      padding: 0 30px;
+      font-size: 16px;
+      color: white;
+      transition: width 1s ease;
+      white-space: nowrap;
+      border-radius: 22px;
+    }
+
+    .weapon-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 0 30px;
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      color: white;
+      font-size: 16px;
+      pointer-events: none;
+    }
+
+    .weapon-name {
+      font-weight: 600;
+      font-size: 16px;
+      padding-right: 10px;
+    }
+
+    .weapon-matches {
+      opacity: 0.9;
+      margin-right: 80px;
+      font-size: 16px;
+      padding-left: 10px;
+    }
+
+    .steellongsword {
+      background: linear-gradient(135deg, #00bcd4, #00e5ff);
+    }
+
+    .steelsinglerapier {
+      background: linear-gradient(135deg, #ff4081, #f50057);
+    }
+
+    .steelrapier\&dagger {
+      background: linear-gradient(135deg, #ffd740, #ffab00);
+    }
+
+    .weapon-progress:not(.steellongsword):not(.steelsinglerapier):not(.steelrapier\&dagger) {
+      background: linear-gradient(135deg, #7c4dff, #651fff);
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: fixed;
+      background: rgba(0, 0, 0, 0.95);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      z-index: 99999;
+    }
+
+    .tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: rgba(0, 0, 0, 0.95);
+    }
+
+    .weapon-bar:hover .tooltip {
+      opacity: 1;
+    }
+
+    .stat-card {
+      background: #1a1a2e;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .stat-card h3 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #00e5ff;
+    }
+
+    .stat-card p {
+      font-size: 24px;
+      font-weight: bold;
+      color: orange;
+      margin: 0;
+    }
+
+    /* Recent Matches */
+    .recent-matches {
+      background: #1a1a2e;
+      padding: 25px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+    }
+
+    .recent-matches h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #00e5ff;
+    }
+
+    .show-more-text {
+      color: #00e5ff;
+      font-size: 14px;
+      margin-top: 15px;
+      text-align: center;
+      opacity: 0.8;
+      cursor: pointer;
+    }
+
+    .show-more-text:hover {
+      opacity: 1;
+    }
+
+    .matches-table-container {
+      overflow-x: auto;
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 600px;
+      border-collapse: collapse;
+    }
+
+    table th, table td {
+      padding: 12px;
+      text-align: center;
+    }
+
+    /* Add specific column widths */
+    table th:nth-child(1) { width: 20%; } /* Event */
+    table th:nth-child(2) { width: 25%; } /* Tournament */
+    table th:nth-child(3) { width: 20%; } /* Opponent */
+    table th:nth-child(4) { width: 15%; } /* Result */
+    table th:nth-child(5) { width: 20%; } /* Date */
+
+    table td:nth-child(5) {
+      white-space: nowrap;
+    }
+
+    table th {
+      background: #16213e;
+      font-weight: 600;
+    }
+
+    table tr:nth-child(even) {
+      background: #16213e;
+    }
+
+    .win { color: #00e5ff; }
+    .loss { color: #ff4081; }
+
+    /* Achievements */
+    .achievements {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .achievement-card {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .achievement-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .achievement-card i {
+      font-size: 48px;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, currentColor 0%, rgba(255, 255, 255, 0.5) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    }
+
+    .achievement-card h3 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: #fff;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .achievement-card p {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.6;
+    }
+
+    .achievement-tooltip {
+      position: absolute;
+      top: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.95);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      z-index: 99999;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .achievement-tooltip::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: rgba(0, 0, 0, 0.95);
+    }
+
+    .achievement-card:hover .achievement-tooltip {
+      opacity: 1;
+    }
+
+    /* Achievement icon colors based on tier */
+    .achievement-card i.epic {
+      color: #ff00ff;
+      filter: drop-shadow(0 0 10px rgba(255, 0, 255, 0.5));
+    }
+    .achievement-card i.unique {
+      color: #ffd700;
+      filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+    }
+    .achievement-card i.gold {
+      color: #ffc107;
+      filter: drop-shadow(0 0 10px rgba(255, 193, 7, 0.5));
+    }
+    .achievement-card i.silver {
+      color: #c0c0c0;
+      filter: drop-shadow(0 0 10px rgba(192, 192, 192, 0.3));
+    }
+    .achievement-card i.bronze {
+      color: #cd7f32;
+      filter: drop-shadow(0 0 10px rgba(205, 127, 50, 0.3));
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .stats-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Add this CSS */
+    .tournament-attendance {
+      background: #1a1a2e;
+      padding: 25px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .tournament-attendance:hover {
+      background: #1e1e35;
+    }
+
+    /* Move the button styles to be part of the section */
+    .tournament-attendance .show-more-text {
+      color: #00e5ff;
+      font-size: 14px;
+      margin-top: 15px;
+      text-align: center;
+      opacity: 0.8;
+    }
+
+    /* Remove the button styles since we're not using a button anymore */
+    .tournament-attendance .show-more-btn {
+      display: none;
+    }
+
+    .tournament-attendance h2 {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #00e5ff;
+    }
+
+    .tournament-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .tournament-item {
+      background: #16213e;
+      padding: 15px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tournament-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .tournament-name-section {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .tournament-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 500;
+      min-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tournament-name img {
+      width: 24px;
+      height: 16px;
+      border-radius: 2px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      object-fit: cover;
+    }
+
+    .tournament-stats {
+      display: flex;
+      gap: 15px;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.7);
+      white-space: nowrap;
+      flex-wrap: wrap;
+    }
+
+    .tournament-stat {
+      background: rgba(0, 229, 255, 0.1);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .tournament-stat strong {
+      color: #00e5ff;
+    }
+
+    .tournament-stat.fighters {
+      background: rgba(156, 39, 176, 0.1);
+      border: 1px solid rgba(156, 39, 176, 0.2);
+    }
+
+    .tournament-stat.fighters strong {
+      color: #e040fb;
+    }
+
+    .attendance-years {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      min-width: 120px;
+      max-width: 300px;
+    }
+
+    .attendance-years span {
+      background: rgba(255, 193, 7, 0.1);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 14px;
+      border: 1px solid rgba(255, 193, 7, 0.2);
+    }
+
+    .attendance-years i {
+      color: #ffd700;
+    }
+
+    .attendance-years span:hover {
+      background: rgba(255, 193, 7, 0.2);
+      transition: background-color 0.3s ease;
+    }
+
+    /* Add responsive adjustments */
+    @media (max-width: 1200px) {
+      .tournament-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .tournament-name-section {
+        width: 100%;
+      }
+
+      .attendance-years {
+        width: 100%;
+        justify-content: flex-start;
+        max-width: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .tournament-name-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .tournament-stats {
+        margin-left: 34px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="fighter-input">
+      <input type="text" placeholder="Type fighter name" id="fighterSearch">
+    </div>
+
+    <div id="fighterProfile">
+      <!-- Profile content will be inserted here by JavaScript -->
+    </div>
+
+    <div class="stats-container">
+      <div class="stat-card">
+        <h3>Win Rate</h3>
+        <p id="winRate">-</p>
+      </div>
+      <div class="stat-card">
+        <h3>Matches</h3>
+        <p id="totalMatches">-</p>
+      </div>
+      <div class="stat-card">
+        <h3>Events</h3>
+        <p id="totalEvents">-</p>
+      </div>
+    </div>
+
+    <div id="countriesSection">
+      <!-- Countries visited will be inserted here by JavaScript -->
+    </div>
+
+    <div id="weaponsSection">
+      <!-- Weapons usage will be inserted here by JavaScript -->
+    </div>
+
+    <div id="tournamentSection">
+      <!-- Tournament attendance will be inserted here by JavaScript -->
+    </div>
+
+    <div class="recent-matches">
+      <h2>Recent Matches</h2>
+      <div class="matches-table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Event</th>
+              <th>Tournament</th>
+              <th>Opponent</th>
+              <th>Result</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="matchesTableBody">
+            <!-- Recent matches will be inserted here by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="achievementsSection">
+      <!-- Achievements will be inserted here by JavaScript -->
+    </div>
+  </div>
+
+  <script>
+    let currentFighterMatches = [];
+
+    function renderFighterProfile(fighter) {
+      const profile = document.getElementById('fighterProfile');
+      const matchesTableBody = document.getElementById('matchesTableBody');
+      const achievementsSection = document.getElementById('achievementsSection');
+      const countriesSection = document.getElementById('countriesSection');
+      const weaponsSection = document.getElementById('weaponsSection');
+      const winRate = document.getElementById('winRate');
+      const totalMatches = document.getElementById('totalMatches');
+      const totalEvents = document.getElementById('totalEvents');
+
+      if (!fighter) {
+        profile.innerHTML = `
+          <div class="profile-card">
+            <h1>Welcome to HEMA Fighter Profiles</h1>
+            <p>Search for a fighter above to view their profile</p>
+          </div>
+        `;
+        matchesTableBody.innerHTML = '';
+        achievementsSection.innerHTML = '';
+        countriesSection.innerHTML = '';
+        weaponsSection.innerHTML = '';
+        winRate.innerText = '-';
+        totalMatches.innerText = '-';
+        totalEvents.innerText = '-';
+        return;
+      }
+
+      profile.innerHTML = `
+        <div class="profile-card">
+          <div class="profile-pic"></div>
+          <h1>${fighter.fighter_name}</h1>
+          <p>${fighter.fighter_club_name || "Independent Fighter"}</p>
+          ${fighter.rank_longsword ? `<div class="rank-badge">Steel Longsword Rank #${Math.round(fighter.rank_longsword)}</div>` : ''}
+        </div>
+      `;
+
+      winRate.innerText = fighter.stats.win_rate;
+      totalMatches.innerText = fighter.stats.total_matches;
+      totalEvents.innerText = fighter.stats.total_events;
+
+      // Store the matches data globally
+      currentFighterMatches = fighter.recent_matches;
+
+      matchesTableBody.innerHTML = fighter.recent_matches.slice(0, 5).map(match => `
+        <tr>
+          <td>${match.event_name}</td>
+          <td>${match.tournament_name}</td>
+          <td>${match.opponent_name}</td>
+          <td class="${match.result.toLowerCase()}">${match.result}</td>
+          <td>${new Date(match.event_date).toLocaleDateString()}</td>
+        </tr>
+      `).join('');
+
+      // Add show more button if there are more matches
+      const showMoreContainer = document.createElement('div');
+      showMoreContainer.style.textAlign = 'center';
+      showMoreContainer.classList.add('show-more-container');
+      
+      if (fighter.recent_matches.length > 5) {
+        showMoreContainer.innerHTML = `
+              <div class="show-more-text" onclick="event.stopPropagation(); showAllMatches()">
+                        Click to show all  ${currentFighterMatches.length} matches
+                    </div>
+        `;
+        // Remove any existing show more container before adding new one
+        const existingContainer = document.querySelector('.show-more-container');
+        if (existingContainer) {
+          existingContainer.remove();
+        }
+        document.querySelector('.matches-table-container').after(showMoreContainer);
+      }
+
+      if (fighter.achievements && fighter.achievements.length > 0) {
+        achievementsSection.innerHTML = `
+          <h2>Achievements</h2>
+          <div class="achievements">
+            ${fighter.achievements.map(achievement => `
+              <div class="achievement-card">
+                <div class="achievement-tooltip">
+                  <b>${achievement.achievement_tier}</b>
+                  <br>Top ${achievement.percentile.toFixed(1)}%
+                </div>
+                <i class="fas fa-trophy ${achievement.achievement_tier.toLowerCase()}"></i>
+                <h3>${achievement.achievement_name}</h3>
+                <p>${achievement.achievement_description}</p>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        achievementsSection.innerHTML = '';
+      }
+
+      // Render countries visited
+      if (fighter.countries_visited && fighter.countries_visited.length > 0) {
+        countriesSection.innerHTML = `
+          <div class="countries-visited">
+            <h2>Countries Visited</h2>
+            <div class="flags">
+              ${fighter.countries_visited.map(country => `
+                <img src="https://flagcdn.com/${country.code.toLowerCase()}.svg" 
+                     alt="${country.name} Flag" 
+                     title="${country.name}">
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else {
+        countriesSection.innerHTML = '';
+      }
+
+      // Render weapons usage
+      if (fighter.weapons_usage && fighter.weapons_usage.length > 0) {
+        // Calculate total matches
+        const totalMatches = fighter.weapons_usage.reduce((sum, w) => sum + w.matches, 0);
+        
+        // Calculate percentages and sort by matches count
+        const weaponsWithPercentages = fighter.weapons_usage
+          .map(w => ({
+            ...w,
+            percentage: Math.round((w.matches / totalMatches) * 100)
+          }))
+          .sort((a, b) => b.matches - a.matches);
+
+        weaponsSection.innerHTML = `
+          <div class="weapons-usage">
+            <h2>Weapons Usage</h2>
+            <div class="weapon-bars">
+              ${weaponsWithPercentages.map(w => `
+                <div class="weapon-bar">
+                  <div class="weapon-progress ${w.weapon.toLowerCase().replace(/[& ]/g, '')}" 
+                       style="width: ${w.percentage}%">
+                  </div>
+                  <div class="weapon-info">
+                    <span class="weapon-name">${w.weapon}</span>
+                    <span class="weapon-matches">${w.matches} matches</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else {
+        weaponsSection.innerHTML = '';
+      }
+
+      // Render tournament attendance
+      if (fighter.tournament_attendance && fighter.tournament_attendance.length > 0) {
+        const allTournaments = fighter.tournament_attendance;
+        const displayedTournaments = allTournaments.slice(0, 5);
+        
+        const tournamentSection = document.getElementById('tournamentSection');
+        
+        tournamentSection.innerHTML = `
+            <div class="tournament-attendance">
+                <h2>Tournament Attendance</h2>
+                <div class="tournament-list">
+                    ${displayedTournaments.map(tournament => renderTournamentItem(tournament)).join('')}
+                </div>
+                ${allTournaments.length > 5 ? `
+                    <div class="show-more-text">
+                        Click to show all ${allTournaments.length} tournaments
+                    </div>
+                ` : ''}
+            </div>
+        `;
+
+        // Add click handler directly to the tournament-attendance div
+        const tournamentAttendance = tournamentSection.querySelector('.tournament-attendance');
+        tournamentAttendance.addEventListener('click', function() {
+            const isExpanded = this.dataset.isExpanded === 'true';
+            const tournamentList = this.querySelector('.tournament-list');
+            const showMoreText = this.querySelector('.show-more-text');
+            
+            if (!isExpanded) {
+                tournamentList.innerHTML = allTournaments.map(tournament => 
+                    renderTournamentItem(tournament)
+                ).join('');
+                if (showMoreText) {
+                    showMoreText.textContent = 'Click to show less';
+                }
+            } else {
+                tournamentList.innerHTML = allTournaments.slice(0, 5).map(tournament => 
+                    renderTournamentItem(tournament)
+                ).join('');
+                if (showMoreText) {
+                    showMoreText.textContent = `Click to show all ${allTournaments.length} tournaments`;
+                }
+            }
+            
+            this.dataset.isExpanded = (!isExpanded).toString();
+        });
+
+        // Store the tournaments data
+        tournamentAttendance.dataset.isExpanded = 'false';
+      } else {
+        tournamentSection.innerHTML = '';
+      }
+    }
+
+    async function fetchFighterData(name) {
+      try {
+        const response = await fetch(`/api/fighters?name=${encodeURIComponent(name)}`);
+        const data = await response.json();
+        renderFighterProfile(data.success && data.data.length > 0 ? data.data[0] : null);
+      } catch (error) {
+        console.error('Error fetching fighter data:', error);
+        renderFighterProfile(null);
+      }
+    }
+
+    function debounce(func, wait) {
+      let timeout;
+      return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), wait);
+      };
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderFighterProfile(null);
+      
+      const searchInput = document.getElementById('fighterSearch');
+      const debouncedSearch = debounce(value => {
+        if (value.length >= 3) fetchFighterData(value);
+      }, 300);
+
+      searchInput.addEventListener('input', e => debouncedSearch(e.target.value.trim()));
+
+      const recentMatches = document.querySelector('.recent-matches');
+      recentMatches.addEventListener('click', () => {
+        if (currentFighterMatches.length > 5) {
+          const matchesTableBody = document.getElementById('matchesTableBody');
+          const isExpanded = matchesTableBody.children.length > 5;
+          
+          if (isExpanded) {
+            // Wrap back to 5 matches
+            matchesTableBody.innerHTML = currentFighterMatches.slice(0, 5).map(match => `
+              <tr>
+                <td>${match.event_name}</td>
+                <td>${match.tournament_name}</td>
+                <td>${match.opponent_name}</td>
+                <td class="${match.result.toLowerCase()}">${match.result}</td>
+                <td>${new Date(match.event_date).toLocaleDateString()}</td>
+              </tr>
+            `).join('');
+
+            // Add back the show more button
+            const showMoreContainer = document.createElement('div');
+            showMoreContainer.style.textAlign = 'center';
+            showMoreContainer.classList.add('show-more-container');
+            
+            // Remove any existing show more container before adding new one
+            const existingContainer = document.querySelector('.show-more-container');
+            if (existingContainer) {
+              existingContainer.remove();
+            }
+            
+            showMoreContainer.innerHTML = `
+                    <div class="show-more-text" onclick="event.stopPropagation(); showAllMatches()">
+                        Click to show all  ${currentFighterMatches.length} matches
+                    </div>
+            
+            `;
+            document.querySelector('.matches-table-container').after(showMoreContainer);
+          } else {
+            showAllMatches();
+          }
+        }
+      });
+    });
+
+    function updateTooltip(event, text) {
+      const tooltip = document.querySelector('.tooltip');
+      if (!tooltip) return;
+      
+      tooltip.textContent = text;
+      tooltip.style.left = event.pageX + 'px';
+      tooltip.style.top = (event.pageY - 40) + 'px';
+    }
+
+    function showAllMatches() {
+      const matchesTableBody = document.getElementById('matchesTableBody');
+      matchesTableBody.innerHTML = currentFighterMatches.map(match => `
+        <tr>
+          <td>${match.event_name}</td>
+          <td>${match.tournament_name}</td>
+          <td>${match.opponent_name}</td>
+          <td class="${match.result.toLowerCase()}">${match.result}</td>
+          <td>${new Date(match.event_date).toLocaleDateString()}</td>
+        </tr>
+      `).join('');
+      
+      // Remove the show more button after expanding
+      const showMoreBtn = document.querySelector('.show-more-btn');
+      if (showMoreBtn) {
+        showMoreBtn.parentElement.remove();
+      }
+    }
+
+    // Add this helper function for rendering tournament items
+    function renderTournamentItem(tournament) {
+        return `
+            <div class="tournament-item">
+                <div class="tournament-header">
+                    <div class="tournament-name-section">
+                        <div class="tournament-name" title="${tournament.tournament_name}">
+                            ${tournament.country_code ? 
+                                `<img src="https://flagcdn.com/${tournament.country_code}.svg" 
+                                     alt="${tournament.event_country} flag" 
+                                     title="${tournament.event_country}">` 
+                                : ''
+                            }
+                            ${tournament.tournament_name}
+                        </div>
+                        <div class="tournament-stats">
+                            <div class="tournament-stat fighters">
+                                <strong>${tournament.avg_fighters}</strong> fighters on AVG
+                            </div>
+                            <div class="tournament-stat">
+                                <strong>${tournament.total_matches}</strong> matches
+                            </div>
+                            <div class="tournament-stat">
+                                <strong>${tournament.win_rate}%</strong> win rate
+                            </div>
+                        </div>
+                    </div>
+                    <div class="attendance-years">
+                        ${tournament.years.map(year => `
+                            <span>${year} <i class="fas fa-check"></i></span>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+  </script>
+</body>
+</html>

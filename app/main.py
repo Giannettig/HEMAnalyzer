@@ -1,6 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 import logging
-from .routers import countries_router, clubs_router
+from routers import countries_router, clubs_router, fighters_router
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -9,15 +11,7 @@ logger = logging.getLogger(__name__)
 # Create FastAPI app
 app = FastAPI(
     title="HEMA Analyzer API",
-    description="""
-    API for managing countries, clubs, and related data within the HEMA Analyzer system.
-
-    ### Features:
-    - Retrieve country details by ID.
-    - Fetch a paginated list of countries with filters.
-    - Retrieve club details, including associated fighters.
-    - Fetch a paginated list of clubs with filters.
-    """,
+    description="API for managing HEMA tournament data including countries, clubs, and fighters.",
     version="1.0.3",
     contact={
         "name": "Giuliano Giannetti",
@@ -26,10 +20,16 @@ app = FastAPI(
     },
 )
 
-# Include routers with updated names
-app.include_router(countries_router, prefix="/countries", tags=["countries"])
-app.include_router(clubs_router, prefix="/clubs", tags=["clubs"])
+# Set up static files and templates
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+# Include routers with API prefix
+app.include_router(countries_router, prefix="/api/countries", tags=["countries"])
+app.include_router(clubs_router, prefix="/api/clubs", tags=["clubs"])
+app.include_router(fighters_router, prefix="/api/fighters", tags=["fighters"])
 
 @app.get("/")
-async def root():
-    return {"message": "Welcome to HEMA Ratings API"}
+async def fighter_profile(request: Request):
+    """Render the fighter profile page"""
+    return templates.TemplateResponse("fighter_profile.html", {"request": request})

@@ -1,0 +1,14 @@
+{
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5432,
+            "driver": "PostgreSQL",
+            "name": "HEMA Database",
+            "database": "hema_ratings",
+            "username": "hema_user",
+            "password": "hema_password"
+        }
+    ]
+}
