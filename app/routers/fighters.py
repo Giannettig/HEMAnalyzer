@@ -47,13 +47,21 @@ class Achievement(BaseModel):
     percentile: float
     achieved: bool
 
+class FighterBase(BaseModel):
+    fighter_id: int
+    fighter_name: str
+    fighter_club_name: Optional[str]
+    fighter_nationality: Optional[str]
+    country_code: Optional[str]
+    rank_longsword: Optional[float]
+
 class Fighter(BaseModel):
     fighter_id: int
     fighter_name: str
     fighter_nationality: Optional[str]
     fighter_club_name: Optional[str]
+    country_code: Optional[str]
     rank_longsword: Optional[float]
-    weighted_rating_longsword: Optional[float]
     stats: Stats
     weapons_usage: List[WeaponUsage]
     recent_matches: List[RecentMatch]
@@ -79,29 +87,45 @@ async def search_fighters(
     skip: int = Query(0, ge=0),
     db = Depends(get_db),
 ):
-    # Base fighter query
+    # Get fighter details query
     fighter_query = """
         SELECT 
             f.fighter_id,
             f.fighter_name,
-            f.fighter_nationality,
             f.fighter_club_name,
+            f.fighter_nationality,
+            c.country_code,
             f.rank_longsword,
-            f.weighted_rating_longsword
+            0 as total_events,
+            0 as total_matches,
+            0 as win_rate
         FROM fighters f
+        LEFT JOIN countries c ON LOWER(f.fighter_nationality) = LOWER(c.country_name)
         WHERE 1=1
     """
     
     params = {"limit": limit, "skip": skip}
     
     if name:
-        fighter_query += " AND f.fighter_name ILIKE :name"
+        fighter_query += " AND LOWER(f.fighter_name) LIKE LOWER(:name)"
         params["name"] = f"%{name}%"
     if club:
         fighter_query += " AND f.fighter_club_name ILIKE :club"
         params["club"] = f"%{club}%"
     
-    fighter_query += " ORDER BY f.weighted_rating_longsword DESC NULLS LAST LIMIT :limit OFFSET :skip"
+    fighter_query += """
+        ORDER BY 
+            CASE 
+                WHEN LOWER(f.fighter_name) = LOWER(:exact_name) THEN 0
+                ELSE 1
+            END,
+            f.fighter_name
+        LIMIT :limit OFFSET :skip
+    """
+    if name:
+        params["exact_name"] = name
+    else:
+        params["exact_name"] = ""
     
     try:
         # Get fighters
@@ -271,10 +295,10 @@ async def search_fighters(
             fighter = {
                 "fighter_id": fighter_data["fighter_id"],
                 "fighter_name": fighter_data["fighter_name"],
-                "fighter_nationality": fighter_data.get("fighter_nationality"),
-                "fighter_club_name": fighter_data.get("fighter_club_name"),
-                "rank_longsword": fighter_data.get("rank_longsword"),
-                "weighted_rating_longsword": fighter_data.get("weighted_rating_longsword"),
+                "fighter_nationality": fighter_data["fighter_nationality"],
+                "fighter_club_name": fighter_data["fighter_club_name"],
+                "country_code": fighter_data["country_code"],
+                "rank_longsword": fighter_data["rank_longsword"],
                 "stats": {
                     "win_rate": stats_result.win_rate,
                     "total_matches": stats_result.total_matches if stats_result else 0,
