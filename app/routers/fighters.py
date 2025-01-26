@@ -30,6 +30,11 @@ class RecentMatch(BaseModel):
     result: str
     weapon: str
 
+class Medal(BaseModel):
+    tournament: str
+    year: int
+    type: str
+
 class TournamentAttendance(BaseModel):
     tournament_name: str
     country_code: Optional[str]
@@ -38,6 +43,7 @@ class TournamentAttendance(BaseModel):
     total_matches: int
     win_rate: float
     avg_fighters: int
+    medals: List[Medal]
 
 class Achievement(BaseModel):
     achievement_name: str
@@ -64,8 +70,8 @@ class Fighter(BaseModel):
     rank_longsword: Optional[float]
     stats: Stats
     weapons_usage: List[WeaponUsage]
-    recent_matches: List[RecentMatch]
     tournament_attendance: List[TournamentAttendance]
+    recent_matches: List[RecentMatch]
     achievements: List[Achievement]
 
 class FighterResponse(BaseModel):
@@ -189,6 +195,91 @@ async def search_fighters(
             # queries["weapons_query"] = weapons_query
             weapons_result = db.execute(text(weapons_query), {"fighter_id": fighter_id}).fetchall()
             
+            # Get tournament attendance with event brand
+            tournaments_query = """
+                WITH tournament_years AS (
+                    SELECT DISTINCT
+                        e.event_brand as tournament_name,
+                        e.event_year as year,
+                        c.country_code,
+                        e.event_country,
+                        MAX(e.event_date) as latest_event_date,
+                        ROUND(AVG(t.fighter_count)::numeric, 0) as avg_fighters
+                    FROM match_results m
+                    JOIN tournaments t ON m.tournament_id = t.tournament_id
+                    JOIN events e ON t.event_id = e.event_id
+                    LEFT JOIN countries c ON LOWER(e.event_country) = LOWER(c.country_name)
+                    WHERE m.fighter_id = :fighter_id
+                    GROUP BY e.event_brand, e.event_year, c.country_code, e.event_country
+                ),
+                medals AS (
+                    SELECT DISTINCT
+                        e.event_brand as tournament_name,
+                        t.tournament_name as sub_tournament,
+                        e.event_year as year,
+                        CASE 
+                            WHEN m.is_final AND m.result = 'WIN' THEN 'gold'
+                            WHEN m.is_final AND m.result = 'LOSS' THEN 'silver'
+                            ELSE NULL 
+                        END as medal_type
+                    FROM match_results m
+                    JOIN tournaments t ON m.tournament_id = t.tournament_id
+                    JOIN events e ON t.event_id = e.event_id
+                    WHERE m.fighter_id = :fighter_id
+                    AND m.is_final = true
+                    AND m.result IN ('WIN', 'LOSS')
+                    GROUP BY 
+                        e.event_brand,
+                        t.tournament_name,
+                        e.event_year,
+                        CASE 
+                            WHEN m.is_final AND m.result = 'WIN' THEN 'gold'
+                            WHEN m.is_final AND m.result = 'LOSS' THEN 'silver'
+                            ELSE NULL 
+                        END
+                ),
+                tournament_stats AS (
+                    SELECT 
+                        e.event_brand as tournament_name,
+                        COUNT(*) as total_matches,
+                        COUNT(DISTINCT e.event_id) as total_events,
+                        COUNT(CASE WHEN m.result = 'WIN' THEN 1 END)::float / NULLIF(COUNT(*), 0)::float * 100 as win_rate
+                    FROM match_results m
+                    JOIN tournaments t ON m.tournament_id = t.tournament_id
+                    JOIN events e ON t.event_id = e.event_id
+                    WHERE m.fighter_id = :fighter_id
+                    GROUP BY e.event_brand
+                )
+                SELECT 
+                    t.tournament_name,
+                    t.country_code,
+                    t.event_country,
+                    array_agg(t.year ORDER BY t.year) as years,
+                    array_length(array_agg(t.year), 1) as year_count,
+                    COALESCE(s.total_matches, 0) as total_matches,
+                    COALESCE(s.total_events, 0) as total_events,
+                    CAST(COALESCE(s.win_rate, 0) AS NUMERIC(10,1)) as win_rate,
+                    COALESCE(
+                        json_agg(
+                            json_build_object(
+                                'tournament', m.sub_tournament,
+                                'year', m.year,
+                                'type', m.medal_type
+                            )
+                        ) FILTER (WHERE m.medal_type IS NOT NULL),
+                        '[]'::json
+                    ) as medals,
+                    MAX(t.latest_event_date) as latest_event_date,
+                    ROUND(AVG(t.avg_fighters)::numeric, 0) as avg_fighters
+                FROM tournament_years t
+                LEFT JOIN tournament_stats s ON t.tournament_name = s.tournament_name
+                LEFT JOIN medals m ON t.tournament_name = m.tournament_name
+                GROUP BY t.tournament_name, t.country_code, t.event_country, s.total_matches, s.total_events, s.win_rate
+                ORDER BY MAX(t.latest_event_date) DESC, year_count DESC
+            """
+            # queries["tournaments_query"] = tournaments_query
+            tournaments_result = db.execute(text(tournaments_query), {"fighter_id": fighter_id}).fetchall()
+            
             # Get recent matches
             matches_query = """
                 SELECT 
@@ -207,52 +298,6 @@ async def search_fighters(
             # queries["matches_query"] = matches_query
             matches_result = db.execute(text(matches_query), {"fighter_id": fighter_id}).fetchall()
             
-            # Get tournament attendance with event brand
-            tournaments_query = """
-                WITH tournament_years AS (
-                    SELECT DISTINCT
-                        e.event_brand as tournament_name,
-                        e.event_year as year,
-                        c.country_code,
-                        e.event_country,
-                        MAX(e.event_date) as latest_event_date,
-                        ROUND(AVG(t.fighter_count)::numeric, 0) as avg_fighters
-                    FROM match_results m
-                    JOIN tournaments t ON m.tournament_id = t.tournament_id
-                    JOIN events e ON t.event_id = e.event_id
-                    LEFT JOIN countries c ON LOWER(e.event_country) = LOWER(c.country_name)
-                    WHERE m.fighter_id = :fighter_id
-                    GROUP BY e.event_brand, e.event_year, c.country_code, e.event_country
-                ),
-                tournament_stats AS (
-                    SELECT 
-                        e.event_brand as tournament_name,
-                        COUNT(*) as total_matches,
-                        COUNT(CASE WHEN m.result = 'WIN' THEN 1 END)::float / NULLIF(COUNT(*), 0)::float * 100 as win_rate
-                    FROM match_results m
-                    JOIN tournaments t ON m.tournament_id = t.tournament_id
-                    JOIN events e ON t.event_id = e.event_id
-                    WHERE m.fighter_id = :fighter_id
-                    GROUP BY e.event_brand
-                )
-                SELECT 
-                    t.tournament_name,
-                    t.country_code,
-                    t.event_country,
-                    array_agg(t.year ORDER BY t.year) as years,
-                    array_length(array_agg(t.year), 1) as year_count,
-                    COALESCE(s.total_matches, 0) as total_matches,
-                    CAST(COALESCE(s.win_rate, 0) AS NUMERIC(10,1)) as win_rate,
-                    MAX(t.latest_event_date) as latest_event_date,
-                    ROUND(AVG(t.avg_fighters)::numeric, 0) as avg_fighters
-                FROM tournament_years t
-                LEFT JOIN tournament_stats s ON t.tournament_name = s.tournament_name
-                GROUP BY t.tournament_name, t.country_code, t.event_country, s.total_matches, s.win_rate
-                ORDER BY MAX(t.latest_event_date) DESC, year_count DESC
-            """
-            # queries["tournaments_query"] = tournaments_query
-            tournaments_result = db.execute(text(tournaments_query), {"fighter_id": fighter_id}).fetchall()
-            
             # Get achievements
             achievements_query = """
                 SELECT 
@@ -270,12 +315,22 @@ async def search_fighters(
             # queries["achievements_query"] = achievements_query
             achievements_result = db.execute(text(achievements_query), {"fighter_id": fighter_id}).fetchall()
 
-            # Get countries visited
+            # Get countries visited with statistics
             countries_query = """
-                SELECT DISTINCT e.event_country as name
+                SELECT 
+                    e.event_country as name,
+                    c.country_code,
+                    COUNT(DISTINCT e.event_id) as total_events,
+                    COUNT(DISTINCT m.match_id) as total_matches,
+                    SUM(CASE WHEN m.result = 'WIN' THEN 1 ELSE 0 END) as wins
                 FROM match_results m
-                JOIN events e ON m.event_id = e.event_id
+                JOIN tournaments t ON m.tournament_id = t.tournament_id
+                JOIN events e ON t.event_id = e.event_id
+                LEFT JOIN countries c ON LOWER(e.event_country) = LOWER(c.country_name)
                 WHERE m.fighter_id = :fighter_id
+                AND e.event_country IS NOT NULL
+                GROUP BY e.event_country, c.country_code
+                HAVING COUNT(DISTINCT e.event_id) > 0
                 ORDER BY e.event_country
             """
             countries = db.execute(text(countries_query), {"fighter_id": fighter_id}).fetchall()
@@ -283,12 +338,15 @@ async def search_fighters(
             # Convert country names to codes and add to fighter data
             fighter_data['countries_visited'] = []
             for country in countries:
-                country_name = country[0]  # Access first column of the result
-                # For now, we'll just show the country name without a code
-                # Later we can add a mapping table for country codes
+                country_data = {
+                    'name': country.name,
+                    'country_code': country.country_code,
+                    'total_events': country.total_events,
+                    'total_matches': country.total_matches,
+                    'wins': country.wins
+                }
                 fighter_data['countries_visited'].append({
-                    'name': country_name,
-                    'code': country_name.lower()[:2]  # Simple approximation for now
+                    **country_data
                 })
 
             # Build complete fighter object
@@ -309,6 +367,20 @@ async def search_fighters(
                     {"weapon": row.weapon, "matches": row.matches}
                     for row in weapons_result
                 ],
+                "tournament_attendance": [
+                    {
+                        "tournament_name": row.tournament_name,
+                        "country_code": row.country_code.lower() if row.country_code else None,
+                        "event_country": row.event_country,
+                        "years": row.years,
+                        "total_events": row.total_events,
+                        "total_matches": row.total_matches,
+                        "win_rate": row.win_rate,
+                        "avg_fighters": row.avg_fighters,
+                        "medals": row.medals if row.medals else [],
+                    }
+                    for row in tournaments_result
+                ],
                 "recent_matches": [
                     {
                         "event_name": row.event_name,
@@ -316,21 +388,9 @@ async def search_fighters(
                         "opponent_name": row.opponent_name,
                         "result": row.result,
                         "weapon": row.weapon,
-                        "event_date": str(row.event_date)  # Convert date to string
+                        "event_date": str(row.event_date)
                     }
                     for row in matches_result
-                ],
-                "tournament_attendance": [
-                    {
-                        "tournament_name": row.tournament_name,
-                        "country_code": row.country_code.lower() if row.country_code else None,
-                        "event_country": row.event_country,
-                        "years": row.years,
-                        "total_matches": row.total_matches,
-                        "win_rate": row.win_rate,
-                        "avg_fighters": row.avg_fighters
-                    }
-                    for row in tournaments_result
                 ],
                 "achievements": [
                     {

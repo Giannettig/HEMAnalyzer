@@ -119,27 +119,16 @@ CREATE TABLE rankings (
     month_date DATE
 );
 
-CREATE TABLE match_results (
+CREATE TABLE IF NOT EXISTS match_results (
     match_id SERIAL PRIMARY KEY,
-    tournament_id INTEGER NOT NULL,
-    event_id INTEGER NOT NULL,
-    event_name VARCHAR(200),
-    tournament_name VARCHAR(200),
-    tournament_category VARCHAR(50),
-    tournament_note VARCHAR(100),
-    tournament_weapon VARCHAR(100),
-    fighter_id INTEGER NOT NULL,
-    is_final BOOLEAN,
-    club_id INTEGER,
-    opponent_id INTEGER NOT NULL,
-    fighter_name VARCHAR(200),
-    opponent_name VARCHAR(200),
-    result VARCHAR(50),
-    stage VARCHAR(150), -- Increased length to avoid value truncation
-    debut_fight BOOLEAN,
-    FOREIGN KEY (tournament_id) REFERENCES tournaments(tournament_id),
-    FOREIGN KEY (fighter_id) REFERENCES fighters(fighter_id),
-    FOREIGN KEY (opponent_id) REFERENCES fighters(fighter_id)
+    tournament_id INTEGER REFERENCES tournaments(tournament_id),
+    fighter_id INTEGER REFERENCES fighters(fighter_id),
+    opponent_id INTEGER REFERENCES fighters(fighter_id),
+    event_id INTEGER REFERENCES events(event_id),
+    result VARCHAR(10),
+    weapon VARCHAR(50),
+    is_final BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Begin transaction
@@ -272,6 +261,7 @@ CREATE INDEX idx_club_name ON fighters(fighter_club_name);
 CREATE INDEX idx_tournament_id_matches ON match_results(tournament_id);
 CREATE INDEX idx_fighter1_matches ON match_results(fighter_id);
 CREATE INDEX idx_fighter2_matches ON match_results(opponent_id);
+CREATE INDEX idx_match_results_is_final ON match_results(is_final);
 
 -- After the insert, add these statements:
 DO $$

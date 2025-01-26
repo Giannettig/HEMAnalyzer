@@ -607,11 +607,8 @@
 
     .attendance-years {
       display: flex;
-      gap: 8px;
       flex-wrap: wrap;
-      justify-content: flex-end;
-      min-width: 120px;
-      max-width: 300px;
+      gap: 8px;
     }
 
     .attendance-years span {
@@ -762,6 +759,132 @@
       .info-card {
         margin-top: 20px;
       }
+    }
+
+    /* Add styles for the map tooltip */
+    .datamaps-hoverover {
+      background: rgba(0, 0, 0, 0.9);
+      padding: 8px 12px !important;
+      border-radius: 4px;
+      color: #ffffff !important;
+      font-family: 'Poppins', sans-serif;
+      font-size: 12px !important;
+      line-height: 1.4;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      z-index: -1;
+      pointer-events: none;
+      min-width: 180px !important;
+      height: auto !important;
+      min-height: auto !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 4px !important;
+      opacity: 0 !important;
+      transition: opacity 0.2s ease-in-out !important;
+      visibility: hidden;
+    }
+
+    /* Show the hover box when it has content */
+    .datamaps-hoverover:not(:empty) {
+      z-index: 1000 !important;
+      opacity: 1 !important;
+      transition: opacity 0.2s ease-in-out !important;
+      visibility: visible;
+    }
+
+    .datamaps-hoverover strong {
+      color: #00e5ff;
+      font-weight: 600;
+      display: inline !important;
+      margin-right: 2px !important;
+    }
+
+    .datamaps-hoverover span {
+      display: inline !important;
+    }
+
+    /* Medal styles */
+    .medal {
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 16px;
+    }
+    
+    .medal.gold i {
+      color: #FFD700;
+      filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+    }
+    
+    .medal.silver i {
+      color: #C0C0C0;
+      filter: drop-shadow(0 0 2px rgba(192, 192, 192, 0.5));
+    }
+    
+    .tournament-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .attendance-years .fa-medal.gold {
+      color: #FFD700;
+      filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+    }
+    
+    .attendance-years .fa-medal.silver {
+      color: #C0C0C0;
+      filter: drop-shadow(0 0 2px rgba(192, 192, 192, 0.5));
+    }
+    
+    .attendance-years span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .medals-container {
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+      position: relative;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 4px 8px;
+      border-radius: 4px;
+      margin: 0 4px;
+    }
+
+    .medals-container:hover::after {
+      content: attr(title);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: pre;
+      z-index: 1000;
+      margin-bottom: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .medals-container:hover::before {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: rgba(0, 0, 0, 0.9);
+      margin-bottom: -4px;
+    }
+
+    .year {
+      font-weight: 500;
+      color: #fff;
+      margin-right: 4px;
     }
   </style>
 </head>
@@ -943,7 +1066,7 @@
               <div class="achievement-card">
                 <div class="achievement-tooltip">
                   <b>${achievement.achievement_tier}</b>
-                  <br>Top ${achievement.percentile.toFixed(1)}%
+                  <br>Top ${(100 - achievement.percentile).toFixed(1)}%
                 </div>
                 <i class="fas fa-trophy ${achievement.achievement_tier.toLowerCase()}"></i>
                 <h3>${achievement.achievement_name}</h3>
@@ -1150,46 +1273,165 @@
 
     // Add this helper function for rendering tournament items
     function renderTournamentItem(tournament) {
-        return `
-            <div class="tournament-item">
-                <div class="tournament-header">
-                    <div class="tournament-name-section">
-                        <div class="tournament-name" title="${tournament.tournament_name}">
-                            ${tournament.country_code ? 
-                                `<img src="https://flagcdn.com/${tournament.country_code}.svg" 
-                                     alt="${tournament.event_country} flag" 
-                                     title="${tournament.event_country}">` 
-                                : ''
-                            }
-                            ${tournament.tournament_name}
-                        </div>
-                        <div class="tournament-stats">
-                            <div class="tournament-stat fighters">
-                                <strong>${tournament.avg_fighters}</strong> fighters on AVG
-                            </div>
-                            <div class="tournament-stat">
-                                <strong>${tournament.total_matches}</strong> matches
-                            </div>
-                            <div class="tournament-stat">
-                                <strong>${tournament.win_rate}%</strong> win rate
-                            </div>
-                        </div>
-                    </div>
-                    <div class="attendance-years">
-                        ${tournament.years.map(year => `
-                            <span>${year} <i class="fas fa-check"></i></span>
-                        `).join('')}
-                    </div>
+      // Get unique years and sort them
+      const uniqueYears = [...new Set(tournament.years)].sort((a, b) => b - a);
+      
+      function getMedalsForYear(year) {
+        if (!tournament.medals) return [];
+        const uniqueMedals = [];
+        const seenTournaments = new Set();
+        
+        tournament.medals
+          .filter(medal => medal.year === year)
+          .forEach(medal => {
+            if (!seenTournaments.has(medal.tournament)) {
+              uniqueMedals.push(medal);
+              seenTournaments.add(medal.tournament);
+            }
+          });
+          
+        return uniqueMedals;
+      }
+
+      return `
+        <div class="tournament-item">
+          <div class="tournament-header">
+            <div class="tournament-name-section">
+              <div class="tournament-name" title="${tournament.tournament_name}">
+                ${tournament.country_code ? 
+                  `<img src="https://flagcdn.com/${tournament.country_code}.svg" 
+                       alt="${tournament.event_country} flag" 
+                       title="${tournament.event_country}">` 
+                  : ''
+                }
+                ${tournament.tournament_name}
+              </div>
+              <div class="tournament-stats">
+                <div class="tournament-stat fighters">
+                  <strong>${tournament.avg_fighters}</strong> fighters on AVG
                 </div>
+                <div class="tournament-stat">
+                  <strong>${tournament.total_matches}</strong> matches
+                </div>
+                <div class="tournament-stat">
+                  <strong>${tournament.win_rate}%</strong> win rate
+                </div>
+              </div>
             </div>
-        `;
+            <div class="attendance-years">
+              ${uniqueYears.map(year => {
+                const medals = getMedalsForYear(year);
+                return `<div class="medals-container" title="${medals.length > 0 ? 
+                  medals.map(m => 
+                    `${m.tournament}: ${m.type.charAt(0).toUpperCase() + m.type.slice(1)}`
+                  ).join('\n') : ''}">
+                  <span class="year">${year}</span>
+                  ${medals.length > 0 ? 
+                    medals.map(medal => 
+                      `<i class="fas fa-medal ${medal.type}"></i>`
+                    ).join('') : 
+                    `<i class="fas fa-check"></i>`
+                  }
+                </div>`;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     // Add the map initialization function
     function initializeMap(countries) {
-      // Clear any existing map
       document.getElementById('worldMap').innerHTML = '';
       
+      // Process tournament attendance to get country statistics
+      const countryStats = {};
+      countries.forEach(country => {
+        if (!country.country_code) return;
+        
+        const code = country.country_code.toUpperCase();
+        if (!countryStats[code]) {
+          countryStats[code] = {
+            name: country.name,
+            country_code: code,
+            total_events: 0,
+            total_matches: 0,
+            total_win_rate: 0,
+            event_count: 0  // To calculate average win rate
+          };
+        }
+        
+        // Add stats from this tournament
+        countryStats[code].total_events += 1;
+        countryStats[code].total_matches += country.total_matches || 0;
+        if (country.win_rate) {
+          countryStats[code].total_win_rate += parseFloat(country.win_rate);
+          countryStats[code].event_count += 1;
+        }
+      });
+      
+      // Calculate average win rate for each country
+      Object.values(countryStats).forEach(stats => {
+        stats.win_rate = stats.event_count > 0 
+          ? Math.round(stats.total_win_rate / stats.event_count) 
+          : 0;
+        // Clean up temporary calculation fields
+        delete stats.total_win_rate;
+        delete stats.event_count;
+      });
+
+      // Convert countryStats object to array for easier use
+      const processedCountries = Object.values(countryStats);
+
+      // Community definitions with their colors
+      const communities = {
+        'Balkans': {
+          countries: ['BG', 'HR', 'GR', 'RO', 'RS', 'SI'],
+          baseColor: '#4d1f1f',
+          visitedColor: '#FF6B6B'
+        },
+        'Baltics': {
+          countries: ['LV', 'LT', 'EE'],
+          baseColor: '#1a4442',
+          visitedColor: '#4ECDC4'
+        },
+        'South America': {
+          countries: ['BR', 'PE', 'CL'],
+          baseColor: '#0d3320',
+          visitedColor: '#2ecc71'
+        },
+        'Central Europe': {
+          countries: ['AT', 'CZ', 'DE', 'HU', 'PL', 'SK', 'UA'],
+          baseColor: '#2d3d36',
+          visitedColor: '#96CEB4'
+        },
+        'East Asia': {
+          countries: ['KR', 'PH', 'TW', 'HK', 'JP'],
+          baseColor: '#2d1b42',
+          visitedColor: '#9B5DE5'
+        },
+        'Eurasia': {
+          countries: ['KZ', 'RU'],
+          baseColor: '#2d1b42',
+          visitedColor: '#9B5DE5'
+        },
+        'North America & Nordics': {
+          countries: ['CA', 'DK', 'FI', 'IS', 'IE', 'NO', 'SE', 'GB', 'US'],
+          baseColor: '#003e54',
+          visitedColor: '#00BBF9'
+        },
+        'Oceania': {
+          countries: ['AU', 'NZ', 'ID'],
+          baseColor: '#4d1d3a',
+          visitedColor: '#F15BB5'
+        },
+        'Western Europe': {
+          countries: ['BE', 'FR', 'NL', 'ES', 'CH', 'IT', 'PT'],
+          baseColor: '#4d4514',
+          visitedColor: '#FEE440'
+        }
+      };
+
       // Country code mapping (ISO2 to ISO3)
       const countryCodeMapping = {
         'AT': 'AUT', 'BE': 'BEL', 'BG': 'BGR', 'HR': 'HRV', 'CZ': 'CZE',
@@ -1199,37 +1441,134 @@
         'RO': 'ROU', 'SK': 'SVK', 'SI': 'SVN', 'ES': 'ESP', 'SE': 'SWE',
         'GB': 'GBR', 'UK': 'GBR', 'US': 'USA', 'CA': 'CAN', 'MX': 'MEX',
         'CH': 'CHE', 'NO': 'NOR', 'RU': 'RUS', 'BR': 'BRA', 'AU': 'AUS',
-        'JP': 'JPN', 'CN': 'CHN', 'IN': 'IND', 'ZA': 'ZAF', 'TW': 'TWN'
+        'JP': 'JPN', 'CN': 'CHN', 'IN': 'IND', 'ZA': 'ZAF', 'TW': 'TWN',
+        'CL': 'CHL', 'PE': 'PER', 'UA': 'UKR', 'ID': 'IDN', 'KR': 'KOR',
+        'BY': 'BLR', 'KZ': 'KAZ', 'IS': 'ISL', 'RS': 'SRB', 'HK': 'HKG',
+        'IL': 'ISR', 'NZ': 'NZL', 'AR': 'ARG', 'UY': 'URY', 'PY': 'PRY',
+        'BO': 'BOL', 'EC': 'ECU', 'CO': 'COL', 'VE': 'VEN', 'GY': 'GUY',
+        'SR': 'SUR', 'GF': 'GUF', 'TR': 'TUR', 'CY': 'CYP', 'MT': 'MLT',
+        'AL': 'ALB', 'ME': 'MNE', 'MK': 'MKD', 'BA': 'BIH', 'MD': 'MDA',
+        'AM': 'ARM', 'AZ': 'AZE', 'GE': 'GEO', 'TM': 'TKM', 'UZ': 'UZB',
+        'TJ': 'TJK', 'KG': 'KGZ', 'AF': 'AFG', 'PK': 'PAK', 'BD': 'BGD',
+        'LK': 'LKA', 'MM': 'MMR', 'TH': 'THA', 'LA': 'LAO', 'VN': 'VNM',
+        'KH': 'KHM', 'MY': 'MYS', 'BN': 'BRN', 'PH': 'PHL', 'MO': 'MAC',
+        'TL': 'TLS', 'PG': 'PNG', 'FJ': 'FJI', 'SB': 'SLB', 'VU': 'VUT',
+        'NC': 'NCL', 'PF': 'PYF', 'WS': 'WSM', 'TO': 'TON', 'TV': 'TUV'
       };
       
+      // Create fills object with community colors
+      const fills = {
+        defaultFill: '#2a2a3e',
+        nonCommunityVisited: '#808080'
+      };
+      
+      // Add community colors to fills
+      Object.entries(communities).forEach(([name, data]) => {
+        fills[`${name}_base`] = data.baseColor;
+        fills[`${name}_visited`] = data.visitedColor;
+      });
+
       // Create fill data object with proper format
       const fillData = {};
       
+      // First, set base colors for all community countries
+      Object.entries(communities).forEach(([name, data]) => {
+        data.countries.forEach(countryCode => {
+          const iso3Code = countryCodeMapping[countryCode];
+          if (iso3Code) {
+            fillData[iso3Code] = {
+              fillKey: `${name}_base`
+            };
+          }
+        });
+      });
+      
+      // Then, override with visited colors
       countries.forEach(country => {
+        // Skip if country code is undefined or null
+        if (!country.country_code) return;
+        
         const iso3Code = countryCodeMapping[country.country_code.toUpperCase()];
         if (iso3Code) {
+          // Find which community this country belongs to
+          const community = Object.entries(communities).find(([_, data]) => 
+            data.countries.includes(country.country_code.toUpperCase())
+          );
+          
+          // Get the processed stats for this country
+          const stats = countryStats[country.country_code.toUpperCase()];
+          
           fillData[iso3Code] = {
-            fillKey: 'visited',
-            name: country.event_country
+            fillKey: community ? `${community[0]}_visited` : 'nonCommunityVisited',
+            name: country.event_country,
+            stats: stats
           };
         }
       });
       
+      // Set base color for all mapped countries that aren't in a community
+      Object.values(countryCodeMapping).forEach(iso3Code => {
+        if (!fillData[iso3Code]) {
+          fillData[iso3Code] = {
+            fillKey: 'nonCommunityBase'
+          };
+        }
+      });
+      
+      // Clear any cached map instance
+      if (window.map) {
+        window.map = null;
+      }
+      
       // Initialize the map
-      new Datamap({
+      window.map = new Datamap({
         element: document.getElementById('worldMap'),
         responsive: true,
         projection: 'mercator',
-        fills: {
-          defaultFill: '#2a2a3e',
-          visited: '#00e5ff'
-        },
+        fills: fills,
         data: fillData,
         geographyConfig: {
           borderColor: '#1a1a2e',
           highlightFillColor: false,
           highlightBorderColor: '#1a1a2e',
-          popupOnHover: false
+          highlightOnHover: false,
+          popupOnHover: function(geography) {
+            if (!countries || countries.length === 0) return false;
+            const countryStats = countries.find(c => 
+              c.country_code && countryCodeMapping[c.country_code.toUpperCase()] === geography.id
+            );
+            return !!countryStats;
+          },
+          popupTemplate: function(geography, data) {
+            if (!countries || countries.length === 0) return '';
+            
+            // Get stats from the fillData
+            const stats = data.stats;
+            
+            // Find which community this country belongs to
+            const countryCode = Object.keys(countryCodeMapping).find(
+              code => countryCodeMapping[code] === geography.id
+            );
+            const community = countryCode ? 
+              Object.entries(communities).find(([_, data]) => 
+                data.countries.includes(countryCode)
+              ) : null;
+            
+            return `
+              <div class="datamaps-hoverover">
+                <div><strong>Country:</strong> <span style="color: #fff">${geography.properties.name}</span></div>
+                <div><strong>Scene:</strong> <span style="color: #fff">${community ? community[0] : 'Other'}</span></div>
+                ${stats ? `
+                  <div><strong>Events:</strong> <span style="color: #fff">${stats.total_events}</span></div>
+                  <div><strong>Matches:</strong> <span style="color: #fff">${stats.total_matches}</span></div>
+                  <div><strong>Win Rate:</strong> <span style="color: #fff">${stats.win_rate}%</span></div>
+                ` : ''}
+              </div>
+            `;
+          }
+        },
+        done: function(datamap) {
+          // Let Datamaps handle the hover events
         }
       });
     }
