@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db:
-    build: .
+    image: postgres:15
     ports:
       - "5432:5432"
     environment:
@@ -10,13 +10,13 @@ services:
       POSTGRES_USER: hema_user
       POSTGRES_PASSWORD: hema_password
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./hema_ratings:/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./src/hemanalyzer/hema_ratings:/data:ro
       - postgres_data:/var/lib/postgresql/data
 
   api:
-    build: 
-      context: ./app
+    build:
+      context: .
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
@@ -25,7 +25,8 @@ services:
     environment:
       DATABASE_URL: postgresql://hema_user:hema_password@db:5432/hema_ratings
     volumes:
-      - ./app:/app
+      - ./src:/app/src
+    command: ["poetry", "run", "hemanalyzer"]
 
 volumes:
-  postgres_data: 
+  postgres_data:
