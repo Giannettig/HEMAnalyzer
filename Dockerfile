@@ -1,9 +1,16 @@
-FROM postgres:15
+FROM python:3.12-slim
 
-# Install any additional tools if needed
-RUN apt-get update && apt-get install -y \
-    postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
-# Expose PostgreSQL port
-EXPOSE 5432 
+RUN pip install --no-cache-dir poetry
+
+COPY pyproject.toml poetry.lock ./
+
+RUN poetry config virtualenvs.create false && \
+    poetry install --no-root
+
+COPY src/hemanalyzer /app/hemanalyzer
+
+ENV PYTHONPATH=/app
+
+CMD ["poetry", "run", "hemanalyzer"]

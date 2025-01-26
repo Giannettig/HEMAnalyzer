@@ -1,0 +1,81 @@
+[project]
+name = "hemanalyzer"
+version = "0.1.0"
+description = "hemanalyzer lib"
+authors = [
+    {name = "Jakub Turner",email = "kuba.turner@gmail.com"}
+]
+
+packages = [
+    {include="hemanalyzer", from="src"}
+]
+include = ["*.conf", "py.typed"]
+
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = ">=0.115.7,<0.116.0"
+uvicorn = ">=0.34.0,<0.35.0"
+sqlalchemy = ">=2.0.37,<3.0.0"
+asyncpg = ">=0.30.0,<0.31.0"
+jinja2 = ">=3.1.5,<4.0.0"
+psycopg2-binary = ">=2.9.10,<3.0.0"
+
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^1.14.1"
+pytest = "^8.3.4"
+pytest-asyncio = "^0.25.2"
+pytest-mypy = "^0.10.3"
+pytest-ruff = "^0.4.1"
+teamcity-messages = "^1.32"
+poethepoet = "^0.32.0"
+
+[tool.poetry.scripts]
+hemanalyzer = "hemanalyzer.__main__:main"
+
+[tool.pytest.ini_options]
+addopts = """
+    --verbose
+    --ruff
+    --mypy
+    """
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.poe.tasks]
+_ruff_sort_imports = "ruff check --select I --fix ."
+_ruff_format = "ruff format ."
+format-code = ["_ruff_sort_imports", "_ruff_format"]
+
+[tool.ruff]
+line-length = 99
+output-format = "full"
+force-exclude = true
+extend-exclude = ["**pb2.py", "**pb2.pyi"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "PERF", "ARG", "W", "UP", "B", "SIM"]
+ignore = [
+    "E1", # handled by formatter
+    "E4", # handled by formatter
+    "E5", # handled by formatter
+    "PERF203", # Too many false positives
+]
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 99
+
+[tool.mypy]
+strict = true
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
+warn_unused_ignores = true
+enable_error_code = ["explicit-override", "possibly-undefined"]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
