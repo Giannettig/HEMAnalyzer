@@ -7,28 +7,25 @@ class WeaponUsage(BaseModel):
     weapon: str
     matches: int
 
-
 class Stats(BaseModel):
     win_rate: str
     total_matches: int
     total_events: int
     wins: int
 
-
 class RecentMatch(BaseModel):
     event_name: str
     event_date: str
     tournament_name: str
     opponent_name: str
+    win_chance: float
     result: str
     weapon: str
-
 
 class Medal(BaseModel):
     tournament: str
     year: int
     type: str
-
 
 class TournamentAttendance(BaseModel):
     tournament_name: str
@@ -40,7 +37,6 @@ class TournamentAttendance(BaseModel):
     avg_fighters: int
     medals: List[Medal]
 
-
 class Achievement(BaseModel):
     achievement_name: str
     achievement_description: str
@@ -49,7 +45,6 @@ class Achievement(BaseModel):
     percentile: float
     achieved: bool
 
-
 class FighterBase(BaseModel):
     fighter_id: int
     fighter_name: str
@@ -57,7 +52,6 @@ class FighterBase(BaseModel):
     fighter_nationality: Optional[str]
     country_code: Optional[str]
     rank_longsword: Optional[float]
-
 
 class Fighter(BaseModel):
     fighter_id: int
@@ -71,7 +65,6 @@ class Fighter(BaseModel):
     tournament_attendance: List[TournamentAttendance]
     recent_matches: List[RecentMatch]
     achievements: List[Achievement]
-
 
 class FighterResponse(BaseModel):
     success: bool

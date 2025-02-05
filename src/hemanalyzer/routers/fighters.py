@@ -216,15 +216,17 @@ async def search_fighters(
                 SELECT 
                     e.event_brand as event_name,
                     t.tournament_name,
-                    COALESCE(m.opponent_name, 'Unknown Opponent') as opponent_name,
+                    COALESCE(f.fighter_name, 'Unknown Opponent') as opponent_name,
                     m.result,
                     t.tournament_weapon as weapon,
-                    e.event_date
+                    e.event_date,
+                    m.win_chance
                 FROM match_results m
                 JOIN tournaments t ON m.tournament_id = t.tournament_id
                 JOIN events e ON t.event_id = e.event_id
+                LEFT JOIN fighters f ON m.opponent_id = f.fighter_id
                 WHERE m.fighter_id = :fighter_id
-                ORDER BY e.event_date DESC, m.match_id DESC
+                ORDER BY e.event_date DESC, m.fight_id DESC
             """
             # queries["matches_query"] = matches_query
             matches_result = db.execute(text(matches_query), {"fighter_id": fighter_id}).fetchall()
@@ -319,6 +321,7 @@ async def search_fighters(
                         "result": row.result,
                         "weapon": row.weapon,
                         "event_date": str(row.event_date),
+                        "win_chance": float(row.win_chance) if row.win_chance is not None else None
                     }
                     for row in matches_result
                 ],
